@@ -10,7 +10,7 @@ Sistema de registro de treinos com Python e PostgreSQL.
 ## Instalação
 
 1. Clone o repositório:
-git clone https://github.com/seu_usuario/training-log.git
+git clone https://github.com/ALLANln/TrainingLog
 
 2. Instale as dependências:
 pip install psycopg2
