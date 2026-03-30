@@ -1,13 +1,14 @@
-from treino import Treino
-from database import conectar
-from datetime import datetime
+from treino import Treino # importa a classe treino pra criar objetos
+from database import conectar # importa a função que concta ao banco
+from datetime import datetime # converter pra datas
 
 class SistemaTreinos:
     def adicionar_treino(self, tipo, data_str, duracao, intensidade):
-        conn = conectar()
-        if not conn:
+        conn = conectar() # abre conexão com o banco
+        if not conn: # se nao conseguir conectar, encerra
             return     
 
+        # tenta converter a data para o formato correto
         try:
             data = datetime.strptime(data_str, '%d/%m/%Y').date()
         except ValueError:
@@ -15,13 +16,16 @@ class SistemaTreinos:
             conn.close()
             return
         
-        cursor = conn.cursor()
+        cursor = conn.cursor() # cria o cursor, ele que envia os comando SQL
         tipo = tipo.capitalize()
+
+        # executa o INSERT no banco com as informações do treino
         cursor.execute("""
             INSERT INTO treinos (tipo, data, duracao, intensidade)
             VALUES (%s, %s, %s, %s)
         """, (tipo, data, duracao, intensidade) )
 
+        # fecha o cursor
         conn.commit()
         cursor.close()
         conn.close()
@@ -34,6 +38,7 @@ class SistemaTreinos:
         
         cursor = conn.cursor()
         try:
+            # busca os treinos selecionados por data
             cursor.execute("SELECT tipo, data, duracao, intensidade FROM treinos ORDER BY data")
             resultados = cursor.fetchall()
 
@@ -60,6 +65,7 @@ class SistemaTreinos:
         
         cursor = conn.cursor()
         try:
+            # busca o treino no banco com SELECT de acordo com oque o usuario digitar com o
             cursor.execute(
                 "SELECT tipo, data, duracao, intensidade FROM treinos WHERE LOWER(tipo) = LOWER(%s)",
                 (tipo_busca,)
@@ -78,6 +84,7 @@ class SistemaTreinos:
 
         except Exception as e:
             print("Erro ao buscar treino:", e)
+        # se der erro ou nao, fecha o cursor
         finally:
             cursor.close()
             conn.close()
@@ -91,6 +98,7 @@ class SistemaTreinos:
 
         data = datetime.strptime(data_str, "%d/%m/%Y").date()
 
+        # executa o DELETE no banco para o treino que irá ser excluido
         cursor.execute("""
             DELETE FROM treinos 
             WHERE LOWER(tipo) = %s AND data = %s
@@ -101,6 +109,7 @@ class SistemaTreinos:
         else:
             print(f"Treino do tipo '{tipo}' na data {data_str} removido com sucesso!")
 
+        # fecha cursor
         conn.commit()
         cursor.close()
         conn.close()
@@ -112,8 +121,8 @@ class SistemaTreinos:
         
         cursor = conn.cursor()
 
-        #geral
-        cursor.execute("SELECT COUNT(*), COALESCE(SUM(duracao), 0) FROM treinos")
+        # resumo de todos os treinos 
+        cursor.execute("SELECT COUNT(*), COALESCE(SUM(duracao), 0) FROM treinos") # vai somar no SQL o total de treinos e minutos com SELECT
         total_treinos, total_minutos = cursor.fetchone()
         total_minutos = int(total_minutos) 
 
@@ -124,7 +133,7 @@ class SistemaTreinos:
         print(f"Total de treinos: {total_treinos}")
         print(f"Total de minutos: {total_minutos}")
 
-        #tipo
+        # resumo por tipo, para cada tipo um resumo
         cursor.execute("""
             SELECT tipo, COUNT(*), SUM(duracao)
             FROM treinos
@@ -157,6 +166,7 @@ class SistemaTreinos:
 
         cursor = conn.cursor()
         try:
+            # atualiza os treinos com UPDATE
             cursor.execute("""
                 UPDATE treinos
                 SET tipo = %s, data = %s, duracao = %s, intensidade = %s
@@ -168,6 +178,7 @@ class SistemaTreinos:
             else:
                 conn.commit()
                 print(f"Treino atualizado com sucesso!")
+
         except Exception as e:
             conn.rollback()
             print("Erro ao editar treino:", e)
